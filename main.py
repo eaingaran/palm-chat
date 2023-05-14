@@ -6,10 +6,11 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayo
                                QScrollArea, QFormLayout, QDoubleSpinBox, QSpinBox,
                                QPlainTextEdit, QSizePolicy)
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QMovie, QTextCursor
+from PySide6.QtGui import QTextCursor, QPixmap
 from vertex_ai import BisonChatApp
 
 app = QApplication(sys.argv)
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -54,7 +55,6 @@ class MainWindow(QMainWindow):
 
         self.form_layout.addRow("Examples:", self.examples_layout)
 
-
         self.temperature_input = QDoubleSpinBox()
         self.temperature_input.setRange(0, 1)
         self.temperature_input.setSingleStep(0.1)
@@ -64,7 +64,8 @@ class MainWindow(QMainWindow):
         self.max_output_tokens_input = QSpinBox()
         self.max_output_tokens_input.setRange(1, 1000)
         self.max_output_tokens_input.setValue(100)
-        self.form_layout.addRow(QLabel("Max Output Tokens:"), self.max_output_tokens_input)
+        self.form_layout.addRow(
+            QLabel("Max Output Tokens:"), self.max_output_tokens_input)
 
         self.top_p_input = QDoubleSpinBox()
         self.top_p_input.setRange(0, 1)
@@ -101,7 +102,8 @@ class MainWindow(QMainWindow):
         message_input_layout.addWidget(self.message_input)
 
         self.send_button = QPushButton("Send")
-        self.send_button.clicked.connect(lambda: asyncio.create_task(self.send_message()))
+        self.send_button.clicked.connect(
+            lambda: asyncio.create_task(self.send_message()))
         message_input_layout.addWidget(self.send_button)
         self.message_input.returnPressed.connect(self.send_button.click)
 
@@ -115,16 +117,14 @@ class MainWindow(QMainWindow):
         self.end_chat_button.clicked.connect(self.end_chat)
         self.chat_layout.addWidget(self.end_chat_button)
 
-        # Initialize loading_label and loading_animation here
-        self.loading_animation = QMovie("loading.gif")
+        # Initialize loading_image and loading_label
+        self.loading_image = QPixmap('loading.png')
         self.loading_label = QLabel()
-        self.loading_label.setMovie(self.loading_animation)
-
-        self.layout.addWidget(self.loading_label)
+        self.loading_label.setPixmap(self.loading_image.scaled(
+            self.loading_label.width(), self.loading_label.height(), Qt.KeepAspectRatio))
         self.loading_label.hide()
-
-        self.layout.addWidget(self.loading_label)
-        self.loading_label.hide()
+        self.chat_layout.addWidget(
+            self.loading_label, alignment=Qt.AlignCenter)
 
     def start_chat(self):
         context = self.context_input.toPlainText()
@@ -166,25 +166,25 @@ class MainWindow(QMainWindow):
     async def send_message(self):
         message = self.message_input.text()
         self.chat_display_text_edit.moveCursor(QTextCursor.End)
-        #self.chat_display_text_edit.insertPlainText(f"User: {message}\n")
-        self.chat_display_text_edit.insertHtml(f'<p style="color:yellow;"><b>User</b>: &nbsp;{message}</p><br>')
+        # self.chat_display_text_edit.insertPlainText(f"User: {message}\n")
+        self.chat_display_text_edit.insertHtml(
+            f'<p style="color:yellow;"><b>User</b>: &nbsp;{message}</p><br>')
         self.message_input.clear()
 
-        # Show loading animation
-        self.loading_label = QLabel()
-        self.loading_label.setMovie(self.loading_animation)
-        self.chat_layout.addWidget(self.loading_label)
-        self.loading_animation.start()
+        # Show loading image
+        self.loading_label.show()
 
         # Disable input elements during message sending
         self.message_input.setEnabled(False)
         self.send_button.setEnabled(False)
         self.update()
 
+        # Introduce a small delay for changes to update
+        await asyncio.sleep(0.1)
+
         response = await self.vertex_chat_app.chat(message)
 
-        # Hide loading animation
-        self.loading_animation.stop()
+        # Hide loading image
         self.loading_label.hide()
 
         # Re-enable input elements
@@ -192,11 +192,13 @@ class MainWindow(QMainWindow):
         self.send_button.setEnabled(True)
 
         self.chat_display_text_edit.moveCursor(QTextCursor.End)
-        #self.chat_display_text_edit.insertPlainText(f"{response['author']}: {response['content']}\n\n")
+        # self.chat_display_text_edit.insertPlainText(f"{response['author']}: {response['content']}\n\n")
         if response["author"] == 'System':
-            self.chat_display_text_edit.insertHtml(f'<p style="color:red;"><b>{response["author"]}</b>: &nbsp;{response["content"]}<br><br>')
+            self.chat_display_text_edit.insertHtml(
+                f'<p style="color:red;"><b>{response["author"]}</b>: &nbsp;{response["content"]}<br><br>')
         else:
-            self.chat_display_text_edit.insertHtml(f'<p style="color:green;"><b>{response["author"]}</b>: &nbsp;{response["content"]}<br><br>')
+            self.chat_display_text_edit.insertHtml(
+                f'<p style="color:green;"><b>{response["author"]}</b>: &nbsp;{response["content"]}<br><br>')
         self.chat_display_text_edit.moveCursor(QTextCursor.End)
 
     def clear_chat(self):
@@ -218,7 +220,7 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         central_widget.setLayout(self.layout)
         self.setCentralWidget(central_widget)
-    
+
     def add_example_input(self):
         example_input = QTextEdit()
         example_input.setPlaceholderText("Input")
@@ -229,8 +231,9 @@ class MainWindow(QMainWindow):
         example_row.addWidget(example_input)
         example_row.addWidget(example_output)
 
-        self.examples_layout.insertLayout(self.examples_layout.count() - 1, example_row)
-    
+        self.examples_layout.insertLayout(
+            self.examples_layout.count() - 1, example_row)
+
     def get_examples(self):
         examples = []
 
@@ -243,9 +246,11 @@ class MainWindow(QMainWindow):
             output_text = example_output.toPlainText().strip()
 
             if input_text and output_text:
-                examples.append({"input": {"content": input_text}, "output": {"content": output_text}})
+                examples.append({"input": {"content": input_text},
+                                "output": {"content": output_text}})
 
         return examples
+
 
 def main():
     app = QApplication.instance()
@@ -262,6 +267,7 @@ def main():
 
     with loop:
         sys.exit(loop.run_forever())
+
 
 if __name__ == "__main__":
     main()

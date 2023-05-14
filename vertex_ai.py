@@ -60,9 +60,6 @@ class BisonChatApp:
             "parameters": self.parameters
         }
 
-        import json
-        print(json.dumps(request_body, indent=2))
-
         try:
             response = requests.post(self.model_endpoint, headers=self.headers, json=request_body)
             response.raise_for_status()
