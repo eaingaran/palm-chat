@@ -1,0 +1,9 @@
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
+requests
+pytest
+pytest-asyncio
+aiohttp
+PySide6
+qasync
