@@ -157,6 +157,9 @@ class MainWindow(QMainWindow):
         self.init_chat_ui()
         self.setCentralWidget(self.chat_widget)
 
+        # set focus on the input field
+        self.message_input.setFocus()
+
     def show_error(self, message):
         self.chat_display = QTextEdit()
         self.chat_display.setReadOnly(True)
@@ -200,6 +203,8 @@ class MainWindow(QMainWindow):
             self.chat_display_text_edit.insertHtml(
                 f'<p style="color:green;"><b>{response["author"]}</b>: &nbsp;{response["content"]}<br><br>')
         self.chat_display_text_edit.moveCursor(QTextCursor.End)
+
+        self.message_input.setFocus()
 
     def clear_chat(self):
         self.chat_display_text_edit.clear()
